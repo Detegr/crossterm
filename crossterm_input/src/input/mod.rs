@@ -9,14 +9,14 @@ mod unix_input;
 mod windows_input;
 
 #[cfg(unix)]
-pub use self::unix_input::{AsyncReader, SyncReader};
-#[cfg(unix)]
 use self::unix_input::UnixInput;
+#[cfg(unix)]
+pub use self::unix_input::{AsyncReader, SyncReader};
 
 #[cfg(windows)]
-pub use self::windows_input::{AsyncReader, SyncReader};
-#[cfg(windows)]
 use self::windows_input::WindowsInput;
+#[cfg(windows)]
+pub use self::windows_input::{AsyncReader, SyncReader};
 
 use self::input::parse_event;
 pub use self::input::{input, TerminalInput};

@@ -181,7 +181,7 @@ impl Console {
     }
 
     pub fn read_console_input(&self) -> Result<(u32, Vec<InputRecord>)> {
-        let mut buf_len =  self.number_of_console_input_events()?;
+        let mut buf_len = self.number_of_console_input_events()?;
 
         // Fast-skipping all the code below if there is nothing to read at all
         if buf_len == 0 {
@@ -194,7 +194,7 @@ impl Console {
         self.read_input(&mut buf, buf_len, &mut size)
     }
 
-    pub fn number_of_console_input_events(&self) ->  Result<u32> {
+    pub fn number_of_console_input_events(&self) -> Result<u32> {
         let mut buf_len: DWORD = 0;
         if !is_true(unsafe { GetNumberOfConsoleInputEvents(*self.handle, &mut buf_len) }) {
             return Err(Error::last_os_error());
@@ -203,7 +203,12 @@ impl Console {
         Ok(buf_len)
     }
 
-    fn read_input(&self, buf: &mut Vec<INPUT_RECORD>, buf_len: u32, bytes_written: &mut u32) -> Result<(u32, Vec<InputRecord>)> {
+    fn read_input(
+        &self,
+        buf: &mut Vec<INPUT_RECORD>,
+        buf_len: u32,
+        bytes_written: &mut u32,
+    ) -> Result<(u32, Vec<InputRecord>)> {
         if !is_true(unsafe {
             ReadConsoleInputW(*self.handle, buf.as_mut_ptr(), buf_len, bytes_written)
         }) {

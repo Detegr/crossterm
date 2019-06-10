@@ -85,7 +85,7 @@ impl ITerminalInput for WindowsInput {
                     }
                 }
 
-                if  cancellation_token.load(Ordering::SeqCst) {
+                if cancellation_token.load(Ordering::SeqCst) {
                     return;
                 } else {
                     if event_tx.send(event).is_err() {
@@ -212,9 +212,9 @@ extern "C" {
 fn read_single_event() -> Result<Option<InputEvent>> {
     let console = Console::from(Handle::current_in_handle()?);
 
-    let input = match  console.read_single_input_event()? {
+    let input = match console.read_single_input_event()? {
         Some(event) => event,
-        None => return Ok(None)
+        None => return Ok(None),
     };
 
     match input.event_type {
@@ -222,16 +222,16 @@ fn read_single_event() -> Result<Option<InputEvent>> {
             let key_event = unsafe { KeyEventRecord::from(*input.event.KeyEvent()) };
             if key_event.key_down {
                 // NOTE (@imdaveho): only handle key down, this is because unix limits key events to key press
-               return Ok(None);
+                return Ok(None);
             }
             if let Some(event) = handle_key_event(&key_event) {
                 return Ok(Some(InputEvent::Keyboard(event)));
-            }else {
+            } else {
                 return Ok(None);
             }
         }
         InputEventType::MouseEvent => {
-            let mouse_event = unsafe {MouseEvent::from(*input.event.MouseEvent())};
+            let mouse_event = unsafe { MouseEvent::from(*input.event.MouseEvent()) };
             if let Some(event) = handle_mouse_event(&mouse_event) {
                 return Ok(Some(InputEvent::Mouse(event)));
             } else {
@@ -265,7 +265,7 @@ fn read_input_events() -> Result<(u32, Vec<InputEvent>)> {
 
                     if let Some(event) = handle_key_event(&key_event) {
                         input_events.push(InputEvent::Keyboard(event));
-                    }else {
+                    } else {
                         return Ok((0, Vec::new()));
                     }
                 }
@@ -284,29 +284,18 @@ fn read_input_events() -> Result<(u32, Vec<InputEvent>)> {
         }
     }
 
-    return Ok((result.0, input_events))
+    return Ok((result.0, input_events));
 }
 
 fn handle_key_event(key_event: &KeyEventRecord) -> Option<KeyEvent> {
     let key_code = key_event.virtual_key_code as i32;
     match key_code {
-        VK_SHIFT | VK_CONTROL | VK_MENU => {
-            None
-        }
-        VK_BACK => {
-            Some(KeyEvent::Backspace)
-        }
-        VK_ESCAPE => {
-            Some( KeyEvent::Esc)
-        }
-        VK_RETURN => {
-            Some( KeyEvent::Char('\n'))
-        }
-        VK_F1 | VK_F2 | VK_F3 | VK_F4 |
-        VK_F5 | VK_F6 | VK_F7 | VK_F8 |
-        VK_F9 | VK_F10 | VK_F11 | VK_F12 => {
-            Some( KeyEvent::F((key_event.virtual_key_code - 111) as u8))
-        }
+        VK_SHIFT | VK_CONTROL | VK_MENU => None,
+        VK_BACK => Some(KeyEvent::Backspace),
+        VK_ESCAPE => Some(KeyEvent::Esc),
+        VK_RETURN => Some(KeyEvent::Char('\n')),
+        VK_F1 | VK_F2 | VK_F3 | VK_F4 | VK_F5 | VK_F6 | VK_F7 | VK_F8 | VK_F9 | VK_F10 | VK_F11
+        | VK_F12 => Some(KeyEvent::F((key_event.virtual_key_code - 111) as u8)),
         VK_LEFT | VK_UP | VK_RIGHT | VK_DOWN => {
             // Modifier Keys (Ctrl, Shift) Support
             let key_state = &key_event.control_key_state;
@@ -314,71 +303,67 @@ fn handle_key_event(key_event: &KeyEventRecord) -> Option<KeyEvent> {
             let shift_pressed = key_state.has_state(SHIFT_PRESSED);
 
             let event = match key_code {
-                VK_LEFT =>
+                VK_LEFT => {
                     if ctrl_pressed {
-                        Some( KeyEvent::CtrlLeft)
+                        Some(KeyEvent::CtrlLeft)
                     } else if shift_pressed {
-                        Some( KeyEvent::ShiftLeft)
+                        Some(KeyEvent::ShiftLeft)
                     } else {
                         Some(KeyEvent::Left)
-                    },
+                    }
+                }
                 VK_UP => {
                     if ctrl_pressed {
-                        Some(  KeyEvent::CtrlUp)
+                        Some(KeyEvent::CtrlUp)
                     } else if shift_pressed {
-                        Some( KeyEvent::ShiftUp)
+                        Some(KeyEvent::ShiftUp)
                     } else {
-                        Some( KeyEvent::Up)
+                        Some(KeyEvent::Up)
                     }
-                },
-                VK_RIGHT =>
+                }
+                VK_RIGHT => {
                     if ctrl_pressed {
                         Some(KeyEvent::CtrlRight)
                     } else if shift_pressed {
-                        Some( KeyEvent::ShiftRight)
+                        Some(KeyEvent::ShiftRight)
                     } else {
-                        Some( KeyEvent::Right)
-                    },
-                VK_DOWN =>
+                        Some(KeyEvent::Right)
+                    }
+                }
+                VK_DOWN => {
                     if ctrl_pressed {
-                        Some( KeyEvent::CtrlDown)
+                        Some(KeyEvent::CtrlDown)
                     } else if shift_pressed {
                         Some(KeyEvent::ShiftDown)
                     } else {
                         Some(KeyEvent::Down)
-                    },
-                _ => None
+                    }
+                }
+                _ => None,
             };
 
             event
         }
         VK_PRIOR | VK_NEXT => {
             if key_code == VK_PRIOR {
-                Some( KeyEvent::PageUp)
+                Some(KeyEvent::PageUp)
             } else if key_code == VK_NEXT {
-                Some( KeyEvent::PageDown)
+                Some(KeyEvent::PageDown)
             } else {
                 None
             }
         }
         VK_END | VK_HOME => {
             if key_code == VK_HOME {
-                Some(  KeyEvent::Home)
+                Some(KeyEvent::Home)
             } else if key_code == VK_END {
-                Some(   KeyEvent::End)
+                Some(KeyEvent::End)
             } else {
                 None
             }
         }
-        VK_DELETE => {
-            Some(   KeyEvent::Delete)
-        }
-        VK_INSERT => {
-            Some( KeyEvent::Insert)
-        }
-        VK_TAB => {
-            Some(KeyEvent::Char('\t'))
-        }
+        VK_DELETE => Some(KeyEvent::Delete),
+        VK_INSERT => Some(KeyEvent::Insert),
         _ => {
             // Modifier Keys (Ctrl, Alt, Shift) Support
             let character_raw = { (unsafe { *key_event.u_char.UnicodeChar() } as u16) };
@@ -395,12 +380,10 @@ fn handle_key_event(key_event: &KeyEventRecord) -> Option<KeyEvent> {
 
                     if (command).is_alphabetic() {
                         Some(KeyEvent::Alt(command))
-                    }
-                    else {
+                    } else {
                         None
                     }
                 } else if key_state.has_state(LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED) {
-
                     match character_raw as u8 {
                         c @ b'\x01'...b'\x1A' => {
                             Some(KeyEvent::Ctrl((c as u8 - 0x1 + b'a') as char))
@@ -408,12 +391,16 @@ fn handle_key_event(key_event: &KeyEventRecord) -> Option<KeyEvent> {
                         c @ b'\x1C'...b'\x1F' => {
                             Some(KeyEvent::Ctrl((c as u8 - 0x1C + b'4') as char))
                         }
-                        _ => None
+                        _ => None,
                     }
                 } else if key_state.has_state(SHIFT_PRESSED) {
                     // Shift + key press, essentially the same as single key press
                     // Separating to be explicit about the Shift press.
-                    Some(KeyEvent::Char(character))
+                    if character == '\t' {
+                        Some(KeyEvent::BackTab)
+                    } else {
+                        Some(KeyEvent::Char(character))
+                    }
                 } else {
                     Some(KeyEvent::Char(character))
                 }
@@ -439,20 +426,30 @@ fn handle_mouse_event(event: &MouseEvent) -> Option<super::MouseEvent> {
         EventFlags::PressOrRelease => {
             // Single click
             match event.button_state {
-                ButtonState::Release => {
-                    Some(super::MouseEvent::Release(xpos as u16, ypos as u16))
-                }
+                ButtonState::Release => Some(super::MouseEvent::Release(xpos as u16, ypos as u16)),
                 ButtonState::FromLeft1stButtonPressed => {
                     // left click
-                    Some(super::MouseEvent::Press(MouseButton::Left, xpos as u16, ypos as u16))
+                    Some(super::MouseEvent::Press(
+                        MouseButton::Left,
+                        xpos as u16,
+                        ypos as u16,
+                    ))
                 }
                 ButtonState::RightmostButtonPressed => {
                     // right click
-                    Some(super::MouseEvent::Press(MouseButton::Right, xpos as u16, ypos as u16))
+                    Some(super::MouseEvent::Press(
+                        MouseButton::Right,
+                        xpos as u16,
+                        ypos as u16,
+                    ))
                 }
                 ButtonState::FromLeft2ndButtonPressed => {
                     // middle click
-                    Some(super::MouseEvent::Press(MouseButton::Middle, xpos as u16, ypos as u16))
+                    Some(super::MouseEvent::Press(
+                        MouseButton::Middle,
+                        xpos as u16,
+                        ypos as u16,
+                    ))
                 }
                 _ => None,
             }
@@ -471,13 +468,21 @@ fn handle_mouse_event(event: &MouseEvent) -> Option<super::MouseEvent> {
             // NOTE (@imdaveho) from https://docs.microsoft.com/en-us/windows/console/mouse-event-record-str
             // if `button_state` is negative then the wheel was rotated backward, toward the user.
             if event.button_state != ButtonState::Negative {
-                Some(super::MouseEvent::Press(MouseButton::WheelUp, xpos as u16, ypos as u16))
+                Some(super::MouseEvent::Press(
+                    MouseButton::WheelUp,
+                    xpos as u16,
+                    ypos as u16,
+                ))
             } else {
-                Some(super::MouseEvent::Press(MouseButton::WheelDown, xpos as u16, ypos as u16))
+                Some(super::MouseEvent::Press(
+                    MouseButton::WheelDown,
+                    xpos as u16,
+                    ypos as u16,
+                ))
             }
         }
         EventFlags::DoubleClick => None, // NOTE (@imdaveho): double click not supported by unix terminals
         EventFlags::MouseHwheeled => None, // NOTE (@imdaveho): horizontal scroll not supported by unix terminals
-        // TODO: Handle Ctrl + Mouse, Alt + Mouse, etc.
+                                           // TODO: Handle Ctrl + Mouse, Alt + Mouse, etc.
     }
 }

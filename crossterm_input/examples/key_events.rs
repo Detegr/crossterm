@@ -70,9 +70,7 @@ fn process_input_event(key_event: InputEvent) -> bool {
                 println!("{}", "Unknown mouse event");
             }
         },
-        InputEvent::Resize => {
-            println!("Resize event happened")
-        }
+        InputEvent::Resize => println!("Resize event happened"),
         _ => println!("Unknown!"),
     }
 
@@ -131,6 +129,6 @@ pub fn read_synchronously() {
 fn main() {
     // un-comment below and run with
     // `cargo run --example key_events`:
-//    read_synchronously();
-         read_asynchronously();
+    //    read_synchronously();
+    read_asynchronously();
 }
