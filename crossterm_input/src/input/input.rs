@@ -156,6 +156,9 @@ pub(crate) fn parse_event<I>(item: u8, iter: &mut I) -> Result<InputEvent>
 where
     I: Iterator<Item = u8>,
 {
+
+    println!("raw: {}", item);
+
     let error = ErrorKind::IoError(io::Error::new(
         io::ErrorKind::Other,
         "Could not parse an event",

@@ -122,3 +122,18 @@ pub enum KeyEvent {
     ShiftRight,
     ShiftLeft,
 }
+
+pub enum ModifierKeys {
+    None = 0,
+    Alt = 1,
+    Control = 2,
+    Shift = 4,
+    Home = 8
+}
+
+struct ConsoleKeyInfo {
+    pub modifiers: ModifierKeys,
+    pub pressed_char: u8,
+    pub pressed_key: u8,
+
+}
